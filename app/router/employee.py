@@ -1,4 +1,3 @@
-import numbers
 from fastapi import APIRouter, Query
 # from sqlalchemy import text, create_engine
 from app.db.employee import db_get_emp_list

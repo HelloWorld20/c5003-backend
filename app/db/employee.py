@@ -1,23 +1,7 @@
 from sqlalchemy import text
 from .init import engine
 
-# def db_get_dept_name():
-#     with engine.connect() as conn:
-#         result = conn.execute(text('SELECT dept_name FROM departments'))
-#         res = []
-#         for row in result:
-#             print(row[0])
-#             res.append(row[0])
-#         return res
-    
-# def db_get_dept():
-#     with engine.connect() as conn:
-#         result = conn.execute(text('SELECT * FROM departments'))
-#         # 将Row对象转换为字典
-#         # 遍历result，把每一项（row）传入到for前面的表达式中处理
-#         # 等同于js中的result.map(row => dict(row._mapping))
-#         res = [dict(row._mapping) for row in result]
-#         return res
+
 
 def db_get_emp_list(pageNo: int, pageSize: int, gender: str, emp_no: int, birth_date: str, hire_date: str, name: str):
     pageNo = pageNo or 1
