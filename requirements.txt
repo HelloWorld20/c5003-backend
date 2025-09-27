@@ -1,0 +1,18 @@
+# FastAPI核心依赖
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# 数据库相关依赖
+sqlalchemy==2.0.23
+pymysql==1.1.0
+cryptography==41.0.7
+
+# 数据验证和序列化
+pydantic==2.5.0
+
+# 密码加密依赖
+passlib[bcrypt]==1.7.4
+
+# 其他工具依赖
+python-dotenv==1.0.0
+python-multipart==0.0.6
