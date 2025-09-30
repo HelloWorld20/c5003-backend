@@ -26,6 +26,8 @@ cd test_db  # go to the test_db directory
 mysql -h 127.0.0.1 -P 3306 -u root < employees.sql  # import base data
 ```
 
+In `app/db/init.py`, modify the database connection string. Usually, only the password needs to be changed.
+
 ## 4) Start the service
 ```bash
 uvicorn main:app --reload

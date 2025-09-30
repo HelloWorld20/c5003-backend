@@ -1,7 +1,13 @@
 from sqlalchemy import text, create_engine
 
+db_user = 'root'
+db_password = 'Qq742589'
+db_name = 'employees'
+host = 'localhost'
+port = '3306'
+
 # 数据库连接配置
-DATABASE_URL = "mysql+pymysql://root:Qq742589@localhost:3306/employees?charset=utf8mb4"
+DATABASE_URL = f"mysql+pymysql://{db_user}:{db_password}@{host}:{port}/{db_name}?charset=utf8mb4"
 
 
 engine = create_engine(
