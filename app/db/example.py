@@ -1,6 +1,7 @@
 from sqlalchemy import text
 from .init import engine
 
+# 获取列表 
 def db_get_emp_list(pageNo: int, pageSize: int, gender: str):
     with engine.connect() as conn:
         # 根据业务需求、传入的参数拼接SQL语句。
@@ -20,3 +21,13 @@ def db_get_emp_list(pageNo: int, pageSize: int, gender: str):
         else:
             # 非查询语句，返回受影响行数
             return {"rowcount": result.rowcount}
+
+# add employee
+def db_add_emp():
+    pass
+# update employee's info
+def ab_update_emp():
+    pass
+# delete one or more employee's record
+def db_del_emp():
+    pass

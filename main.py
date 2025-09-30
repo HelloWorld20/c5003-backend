@@ -6,7 +6,7 @@ import logging
 # 导入自定义模块
 # from database import get_db, create_tables, engine
 
-from app.router import employee, executor
+from app.router import employee, executor, example
 
 # 配置日志
 logging.basicConfig(
@@ -35,6 +35,7 @@ app.add_middleware(
 
 app.include_router(employee.router)
 app.include_router(executor.router)
+app.include_router(example.router)
 
 
 # 应用启动事件

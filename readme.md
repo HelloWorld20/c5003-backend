@@ -52,9 +52,9 @@ Client → app/router → app/db → MySQL → app/router → Client（在线文
 
 ### 代码组织
 
-一般情况下，会根据需求来给组织代码，router和db都新建一个对应文件夹，仅处理当前模块的业务逻辑。
+一般情况下，会根据需求来给组织代码，`app/router`和`app/db`都新建一个对应文件夹，仅处理当前模块的业务逻辑。
 
-比如router和db下都有一个employee.py文件，这里专门处理雇员的信息。如果想要专门处理部门的业务逻辑，请新建一个department.py来写代码，不要混在一起。
+比如router和db下都有一个`employee.py`文件，这里专门处理雇员的信息。如果想要专门处理部门的业务逻辑，请新建一个`department.py`来写代码，不要混在一起。
 
 ### app/router 接口层
 
@@ -64,3 +64,12 @@ Client → app/router → app/db → MySQL → app/router → Client（在线文
 
 数据访问。主要逻辑写在这里。接收接口层传递来的参数。拼接sql来操作数据库，获得数据库的反馈并且组合数据返回给前端。
 
+# 如何开发
+
+ - 根据业务功能，在`app/router`和`app/db`分别新建对应业务文件。如开发部门相关的，新建`departments.py`文件进行开发。
+
+ - 参照`example.py`，开发相应业务逻辑。
+
+ - 在`main.py`中把新加的业务模块挂载到全局路由中
+
+  app.include_router(example.router)
