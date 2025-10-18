@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Body
 # from sqlalchemy import text, create_engine
 from app.db.employee import db_get_emp_list, db_add_emp, db_del_emp, db_update_emp
 
@@ -6,11 +6,13 @@ router = APIRouter()
 
 @router.get('/employees/list', tags=['employees'])
 async def get_employees_list(
-    pageNo: int = Query(..., description="页码，必填"),
+    page: int = Query(..., description="页码，必填"),
     pageSize: int = Query(..., description="每页条数，必填"),
     emp_no: int | None = Query(None, description="员工编号，非必填"),
-    birth_date: str | None = Query(None, description="出生日期，非必填"),
-    hire_date: str | None = Query(None, description="入职日期，非必填"),
+    birth_date_start: str | None = Query(None, description="出生开始日期，非必填"),
+    birth_date_end: str | None = Query(None, description="出生结束日期，非必填"),
+    hire_date_start: str | None = Query(None, description="入职开始日期，非必填"),
+    hire_date_end: str | None = Query(None, description="入职结束日期，非必填"),
     name: str | None = Query(None, description="姓名，非必填"),
     gender: str | None = Query(None, description="性别，非必填"),
 ):
@@ -23,14 +25,14 @@ async def get_employees_list(
 
 @router.post('/employees', tags=['employees'])
 async def add_employee(
-    gender: str = Query(..., description="性别，必填"),
-    birth_date: str = Query(..., description="出生日期，必填"),
-    hire_date: str = Query(..., description="入职日期，必填"),
-    name: str = Query(..., description="姓名，必填"),
+    gender: str = Body(..., description="性别，必填"),
+    birth_date: str = Body(..., description="出生日期，必填"),
+    hire_date: str = Body(..., description="入职日期，必填"),
+    name: str = Body(..., description="姓名，必填")
 ):
     """
     添加员工：创建新的员工记录。
-    - 必填：gender, birth_date, hire_date, name
+    - 请求体参数：gender, birth_date, hire_date, name
     """
     return db_add_emp(gender=gender, birth_date=birth_date, hire_date=hire_date, name=name)
 
@@ -54,19 +56,3 @@ async def delete_employee(emp_no: int):
     - 路径参数：emp_no (员工编号)
     """
     return db_del_emp(emp_no=emp_no)
-
-# @router.get("/users/me", tags=["dept"])
-# async def read_user_me():
-#     return {"username": "fakecurrentuser"}
-
-# @router.get("/dept_name", tags=["dept"])
-# async def get_dept_name():
-#     """
-#     dept
-#     """
-#     # 数据库连接配置
-#     return db_get_dept_name()
-
-# @router.get('/dept', tags=['dept'])
-# async def get_dept():
-#     return db_get_dept()

@@ -16,3 +16,6 @@ passlib[bcrypt]==1.7.4
 # 其他工具依赖
 python-dotenv==1.0.0
 python-multipart==0.0.6
+numpy
+seaborn
+pandas
