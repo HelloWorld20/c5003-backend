@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 # 创建FastAPI应用实例
 app = FastAPI(
     title="CityU Backend API",
-    description="基于FastAPI和MySQL的后端框架",
+    description="Backend Based on FastAPI & MySQL",
     version="1.0.0",
     docs_url="/docs",  # Swagger UI文档地址
     redoc_url="/redoc"  # ReDoc文档地址
@@ -45,43 +45,35 @@ app.include_router(example.router)
 @app.on_event("startup")
 async def startup_event():
     """
-    应用启动时执行的操作
-    创建数据库表
+    Create Database when Initiating the Application
     """
-    logger.info("应用启动中...")
+    logger.info("Launching Application...")
     try:
         # create_tables()
-        logger.info("数据库初始化完成")
+        logger.info("Finished Database Initialization.")
     except Exception as e:
-        logger.error(f"数据库初始化失败: {e}")
+        logger.error(f"Failure to cretate database: {e}")
         raise
 
 # 应用关闭事件
 @app.on_event("shutdown")
 async def shutdown_event():
     """
-    应用关闭时执行的操作
+    Closing the Application.
     """
-    logger.info("应用正在关闭...")
+    logger.info("Application Closing...")
     engine.dispose()
-    logger.info("数据库连接已关闭")
+    logger.info("Database Shutdown...")
 
 # 根路径 - 健康检查
-@app.get("/", tags=["健康检查"])
+@app.get("/", tags=["System Health Check"])
 async def root():
-    """
-    根路径接口，用于健康检查
-    
-    Returns:
-        dict: 包含应用信息的字典
-    """
     return {
         "message": "CityU Backend API",
         "status": "running",
         "version": "1.0.0",
         "docs": "/docs"
     }
-
 
 
 # 如果直接运行此文件，启动开发服务器
