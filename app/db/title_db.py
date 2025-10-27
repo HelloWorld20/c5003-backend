@@ -7,8 +7,8 @@ def db_title_list(Page_Number: int, Row_Count: int, Employee_ID: int, Title: str
     Query a title list with pagination and optional filtering conditions.
     And use a dictionary mapping to simplify the conditional concatenation logic.
     """
-    Page_Number = Page_Number or 1
-    Row_Count = Row_Count or 100
+    pageNo = Page_Number or 1
+    pageSize = Row_Count or 10
     with engine.connect() as conn:
         sql = 'SELECT * FROM titles'
         
@@ -43,8 +43,8 @@ def db_title_list(Page_Number: int, Row_Count: int, Employee_ID: int, Title: str
             sql += ' WHERE ' + ' AND '.join(where_clauses)
 
         sql += ' LIMIT :page_size OFFSET :offset'
-        params['page_size'] = Row_Count
-        params['offset'] = (Page_Number - 1) * Row_Count
+        params['page_size'] = pageSize
+        params['offset'] = (pageNo - 1) * pageSize
 
         # Execute the query by passing the SQL string and the parameters dictionary
         result = conn.execute(text(sql), params)
