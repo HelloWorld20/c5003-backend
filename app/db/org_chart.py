@@ -54,7 +54,7 @@ def db_get_organizational_chart(dept_no: Optional[str] = None, limit: int = 100,
     FROM org_tree
     """
     
-    # Order by birth_date to prioritize employees closest to retirement age (oldest first)
+    # Order by department, then hierarchy level, then employee number for optimal indexed performance
     data_sql = """
     WITH RECURSIVE org_tree AS (
         -- Base case (Level 1): Department managers who have no superiors in this database
@@ -152,4 +152,5 @@ def db_get_organizational_chart(dept_no: Optional[str] = None, limit: int = 100,
                 "page": page,
                 "page_size": limit,
                 "total_pages": 0
+
             }
