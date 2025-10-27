@@ -38,7 +38,7 @@ def db_get_retirement_candidates(dept_no: Optional[str] = None, retirement_age: 
       AND (:dept_no IS NULL OR d.dept_no = :dept_no)
     """
     
-    # Order by department, then hierarchy level, then employee number for optimal indexed performance
+    # Order by birth_date to prioritize employees closest to retirement age (oldest first)
     data_sql = """
     SELECT 
         e.emp_no,
@@ -102,4 +102,5 @@ def db_get_retirement_candidates(dept_no: Optional[str] = None, retirement_age: 
                 "page": page,
                 "page_size": limit,
                 "total_pages": 0
+
             }
