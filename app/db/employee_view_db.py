@@ -5,7 +5,7 @@ from .init import engine
 
 def employee_profile(Page_Number: int, Row_Count: int, Employee_ID: int, Employee_Name: str, Title: str, Salary: int, Department_Number: str, Department: str, Manager_Name: str, Effective_Date: str, End_Date: str):
     pageNo = Page_Number or 1
-    pageSize = Row_Count or 100
+    pageSize = Row_Count or 10
 
     with engine.connect() as conn:
         # Step 1: Create or replace the view.
@@ -73,7 +73,7 @@ def employee_profile(Page_Number: int, Row_Count: int, Employee_ID: int, Employe
 
         sql += ' LIMIT :page_size OFFSET :offset'
         params['page_size'] = pageSize
-        params['offset'] = (Page_Number - 1) * pageSize
+        params['offset'] = (pageNo - 1) * pageSize
 
         # Execute the query by passing the SQL string and the parameters dictionary
         result = conn.execute(text(sql), params)
