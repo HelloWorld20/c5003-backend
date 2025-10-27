@@ -6,7 +6,9 @@ import logging
 # 导入自定义模块
 # from database import get_db, create_tables, engine
 
-from app.router import employee, title_router, dept_router, executor, example, employee_view_router, home_viz_router
+
+from app.router import employee, title_router, dept_router, executor, example, employee_view_router, home_viz_router, long_single_role, transfer, promotion, org_chart, headcount_trends, retirement
+
 
 # 配置日志
 logging.basicConfig(
@@ -40,7 +42,12 @@ app.include_router(employee_view_router.router)
 app.include_router(home_viz_router.router)
 app.include_router(executor.router)
 app.include_router(example.router)
-
+app.include_router(long_single_role.router)
+app.include_router(transfer.router)
+app.include_router(promotion.router)
+app.include_router(org_chart.router)
+app.include_router(headcount_trends.router)
+app.include_router(retirement.router)
 
 # 应用启动事件
 @app.on_event("startup")
