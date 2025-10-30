@@ -6,8 +6,8 @@ router = APIRouter()
 
 @router.get('/dept/list', tags=['Departments'])
 async def get_dept_list(
-    Page_Number: int | None = Query(..., description="Mandatory"),
-    Row_Count: int | None = Query(..., description="Mandatory"),
+    Page_Number: int = Query(..., description="Mandatory"),
+    Row_Count: int = Query(..., description="Mandatory"),
     Dept_ID: str | None = Query(None, description="Optional"),
     Dept_Name: str | None = Query(None, description="Optional"),
 ):
@@ -18,8 +18,8 @@ async def get_dept_list(
 
 @router.post('/departments/addition', tags=['Departments'])
 async def add_dept(
-    Dept_ID: str | None = Query(..., description="Mandatory"),
-    Dept_Name: str | None = Query(..., description="Mandatory"),
+    Dept_ID: str = Query(..., description="Mandatory"),
+    Dept_Name: str = Query(..., description="Mandatory"),
 ):
     """
     Add a department.
@@ -28,8 +28,8 @@ async def add_dept(
 
 @router.put('/departments/update', tags=['Departments'])
 async def update_dept(
-    Dept_ID: str | None = Query(..., description="Mandatory"),
-    Dept_Name: str | None = Query(..., description="Mandatory"),
+    Dept_ID: str = Query(..., description="Mandatory"),
+    Dept_Name: str = Query(..., description="Mandatory"),
 ):
     """
     Update department info.
