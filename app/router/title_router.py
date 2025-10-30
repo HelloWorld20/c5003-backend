@@ -6,8 +6,8 @@ router = APIRouter()
 
 @router.get('/titles/list', tags=['Titles'])
 async def get_titles_list(
-    Page_Number: int | None = Query(..., description="Mandatory"),
-    Row_Count: int | None = Query(..., description="Mandatory"),
+    Page_Number: int = Query(..., description="Mandatory"),
+    Row_Count: int = Query(..., description="Mandatory"),
     Employee_ID: int | None = Query(None, description="Optional"),
     Title: str | None = Query(None, description="Optional"),
     From_Date: str | None = Query(None, description="Optional"),
@@ -20,9 +20,9 @@ async def get_titles_list(
 
 @router.post('/titles/addition', tags=['Titles'])
 async def add_title(
-    Employee_ID: int | None = Query(..., description="Mandatory"),
-    Title: str | None = Query(..., description="Mandatory"),
-    From_Date: str | None = Query(..., description="Mandatory"),
+    Employee_ID: int = Query(..., description="Mandatory"),
+    Title: str = Query(..., description="Mandatory"),
+    From_Date: str = Query(..., description="Mandatory"),
     To_Date: str | None = Query(None, description="Optional"),
 ):
     """
@@ -33,10 +33,10 @@ async def add_title(
 
 @router.put('/titles/update', tags=['Titles'])
 async def update_title(
-    Employee_ID: int| None = Query(..., description="Mandatory"),
-    Title: str | None = Query(..., description="Mandatory"),
-    From_Date: str | None = Query(..., description="Mandatory"),
-    To_Date: str | None = Query(..., description="Mandatory"),
+    Employee_ID: int = Query(..., description="Mandatory"),
+    Title: str = Query(..., description="Mandatory"),
+    From_Date: str = Query(..., description="Mandatory"),
+    To_Date: str = Query(..., description="Mandatory"),
 ):
     """
     Update employee title, start_date and end_date.
