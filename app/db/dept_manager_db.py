@@ -89,7 +89,7 @@ def normalize_date_string(date_string: str) -> str:
 # add title
 def db_add_dept_manager(Employee_ID: int, Dept_Number: str, From_Date: str, To_Date: str = '9999-01-01'):
     """
-    Insert a new record for an department manager.
+    Insert a new record for a department manager.
     """
     try:
         # 1. VALIDATE inputs first
