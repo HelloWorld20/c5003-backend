@@ -7,7 +7,7 @@ import logging
 # from database import get_db, create_tables, engine
 
 
-from app.router import home_viz_router, employee, title_router, dept_router, dept_emp_router, employee_view_router
+from app.router import home_viz_router, employee, title_router, dept_router, dept_manager_router, dept_emp_router, employee_view_router
 
 
 # 配置日志
@@ -39,6 +39,7 @@ app.include_router(home_viz_router.router)
 app.include_router(employee.router)
 app.include_router(title_router.router)
 app.include_router(dept_router.router)
+app.include_router(dept_manager_router.router)
 app.include_router(dept_emp_router.router)
 app.include_router(employee_view_router.router)
 
