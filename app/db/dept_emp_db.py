@@ -25,7 +25,7 @@ def db_dept_emp_list(Page_Number: int, Row_Count: int, Employee_ID: int, Dept_Nu
 
         # 条件映射：字段名 -> SQL 条件模板
         condition_map = {
-            'Title': "dept_no = :Dept_Number",
+            'Dept_Number': "dept_no = :Dept_Number",
             'Employee_ID': "emp_no = :Employee_ID",
             'From_Date': "from_date = :From_Date",
             'To_Date': "to_date = :To_Date"
