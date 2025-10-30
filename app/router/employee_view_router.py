@@ -7,8 +7,8 @@ router = APIRouter()
 
 @router.get('/employees/view', tags=['Employees View'])
 async def get_employees_view(
-    Page_Number: int | None = Query(..., description="Mandatory"),
-    Row_Count: int | None = Query(..., description="Mandatory"),
+    Page_Number: int = Query(..., description="Mandatory"),
+    Row_Count: int = Query(..., description="Mandatory"),
     Employee_ID: int | None = Query(None, description="Optional"),
     Employee_Name: str | None = Query(None, description="Optional"),
     Title: str | None = Query(None, description="Optional"),
