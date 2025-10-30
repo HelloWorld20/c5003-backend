@@ -46,8 +46,8 @@ def format_timestamp_to_date(timestamp_str):
 
 def db_get_emp_list(page: int, pageSize: int, gender: str, emp_no: int, birth_date_start: str, birth_date_end: str,  hire_date_start: str, hire_date_end: str,  name: str):
     """
-    根据分页与可选过滤条件查询员工列表。
-    使用字典映射简化条件拼接逻辑。
+    Query an employee list with pagination and optional filtering conditions.
+    And use a dictionary mapping to simplify the conditional concatenation logic.
     """
     page = page or 1
     pageSize = pageSize or 10
@@ -98,7 +98,7 @@ def db_get_emp_list(page: int, pageSize: int, gender: str, emp_no: int, birth_da
         
         sql += f' LIMIT {pageSize} OFFSET {(page - 1) * pageSize}'
 
-        print('执行sql：')
+        print('Execute SQL：')
         print(sql)
         print(countSql)
         result = conn.execute(text(sql))
@@ -109,7 +109,7 @@ def db_get_emp_list(page: int, pageSize: int, gender: str, emp_no: int, birth_da
         # print('我想看的值：')
         # 读取 count(*) 的值：fetchone() 返回一个 Row，再取下标 0
         total = countResult.fetchone()[0]
-        print("总记录数：", total)
+        print("Record Count：", total)
         # 判断是否有查询内容返回（SELECT / RETURNING）
         if result.returns_rows:
             # 将 Row 对象转成字典，便于 JSON 序列化
@@ -137,7 +137,7 @@ def db_add_emp(gender: str, birth_date: str, hire_date: str, name: str):
         # INSERT INTO table_name (column1, column2, column3, ...)
         # VALUES (value1, value2, value3, ...)
 
-        print('执行sql：')
+        print('Execute SQL：')
         print(sql)
         result = conn.execute(text(sql))
         
@@ -159,7 +159,7 @@ def db_update_emp(gender: str, birth_date: str, hire_date: str, name: str, emp_n
 
         sql = 'SELECT * from employees'
 
-        print('执行sql：')
+        print('Execute SQL：')
         print(sql)
         result = conn.execute(text(sql))
 
@@ -178,7 +178,7 @@ def db_del_emp(emp_no: int):
 
         sql = f'DELETE from employees WHERE emp_no = {emp_no}'
 
-        print('执行sql delete：')
+        print('Execute SQL Deletion：')
         print(sql)
         result = conn.execute(text(sql))
         
