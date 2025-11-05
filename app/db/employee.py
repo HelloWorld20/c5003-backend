@@ -4,6 +4,7 @@ import random
 from datetime import datetime
 
 
+
 def format_timestamp_to_date(timestamp_str):
     """
     将时间戳字符串转换为SQL date格式 (YYYY-MM-DD)
@@ -44,6 +45,7 @@ def format_timestamp_to_date(timestamp_str):
 
 
 
+
 def db_get_emp_list(page: int, pageSize: int, gender: str, emp_no: int, birth_date_start: str, birth_date_end: str,  hire_date_start: str, hire_date_end: str,  name: str):
     """
     Query an employee list with pagination and optional filtering conditions.
@@ -52,8 +54,14 @@ def db_get_emp_list(page: int, pageSize: int, gender: str, emp_no: int, birth_da
     page = page or 1
     pageSize = pageSize or 10
     with engine.connect() as conn:
-        sql = 'SELECT * FROM employees'
-        countSql = 'SELECT count(*) FROM employees'
+        sql = """
+            SELECT * FROM employees AS e
+            JOIN dept_emp AS de ON e.emp_no = de.emp_no
+            JOIN departments AS d ON d.dept_no = de.dept_no
+            JOIN titles AS t ON t.emp_no = e.emp_no AND t.from_date = (SELECT MAX(from_date) FROM titles WHERE emp_no = e.emp_no)
+            JOIN salaries AS s ON s.emp_no = e.emp_no AND s.from_date = (SELECT MAX(from_date) FROM salaries WHERE emp_no = e.emp_no)
+        """
+        # countSql = 'SELECT count(*) FROM employees'
         
         # 条件映射：字段名 -> SQL 条件模板
         condition_map = {
@@ -93,28 +101,28 @@ def db_get_emp_list(page: int, pageSize: int, gender: str, emp_no: int, birth_da
         
         if where_clauses:
             sql += ' WHERE ' + ' AND '.join(where_clauses)
-            countSql += ' WHERE ' + ' AND '.join(where_clauses)
+            # countSql += ' WHERE ' + ' AND '.join(where_clauses)
 
         
         sql += f' LIMIT {pageSize} OFFSET {(page - 1) * pageSize}'
 
         print('Execute SQL：')
         print(sql)
-        print(countSql)
+        # print(countSql)
         result = conn.execute(text(sql))
        
 
-        countResult = conn.execute(text(countSql))
+        # countResult = conn.execute(text(countSql))
         # print(dir(result))
         # print('我想看的值：')
         # 读取 count(*) 的值：fetchone() 返回一个 Row，再取下标 0
-        total = countResult.fetchone()[0]
-        print("Record Count：", total)
+        # total = countResult.fetchone()[0]
+        # print("Record Count：", total)
         # 判断是否有查询内容返回（SELECT / RETURNING）
         if result.returns_rows:
             # 将 Row 对象转成字典，便于 JSON 序列化
             data = result.mappings().all()
-            return {'data': data, 'total': total}
+            return {'data': data, 'total': -1}
         else:
             # 非查询语句，返回受影响行数
             return {"rowcount": result.rowcount}
@@ -154,15 +162,57 @@ def db_add_emp(gender: str, birth_date: str, hire_date: str, name: str):
 
 
 # update employee's info
-def db_update_emp(gender: str, birth_date: str, hire_date: str, name: str, emp_no: str):
+def db_update_emp(emp_no: str, gender: str, birth_date: str, hire_date: str, name: str):
     with engine.connect() as conn:
 
-        sql = 'SELECT * from employees'
+        parts = name.split(' ', 1)
+        first_name = parts[0]
+        last_name = parts[1] if len(parts) > 1 else ''
+
+        conditions = {}
+
+        if gender:
+            conditions['gender']= gender
+        if name:
+            first_name = parts[0]
+            last_name = parts[1] if len(parts) > 1 else ''
+            conditions['first_name']= first_name
+            conditions['last_name']= last_name
+
+        if birth_date:
+            conditions['birth_date']= birth_date
+
+        if hire_date:
+            conditions['hire_date']= hire_date
+
+        # 映射字段名到 SET 子句模板
+        set_map = {
+            'gender': "gender = '{value}'",
+            'birth_date': "birth_date = '{value}'",
+            'hire_date': "hire_date = '{value}'",
+            'first_name': "first_name = '{value}'",
+            'last_name': "last_name = '{value}'"
+        }
+
+        # 生成 SET 子句列表并拼接
+        set_clauses = [
+            set_map[key].format(value=value)
+            for key, value in conditions.items()
+            if value and key in set_map
+        ]
+        set_sql = ', '.join(set_clauses)
+        
+
+        sql = f'UPDATE employees SET {set_sql} WHERE emp_no={emp_no}'
+
 
         print('Execute SQL：')
         print(sql)
         result = conn.execute(text(sql))
 
+
+        # 提交事务，确保操作生效
+        conn.commit()
         # 判断是否有查询内容返回（SELECT / RETURNING）
         if result.returns_rows:
             # 将 Row 对象转成字典，便于 JSON 序列化

@@ -160,7 +160,7 @@ def db_update_title(Employee_ID: int, Title: str, From_Date: str, To_Date: str):
             # 2. EXECUTE database logic
             result = conn.execute(text(sql), params)
             conn.commit()
-            
+
             if result.rowcount > 0:
                 return {"rowcount": result.rowcount, "status": "success"}
             else:
