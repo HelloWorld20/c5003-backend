@@ -7,7 +7,7 @@ import logging
 # from database import get_db, create_tables, engine
 
 
-from app.router import home_viz_router, employee, title_router, dept_router, dept_manager_router, dept_emp_router, employee_view_router, salary_router, executor
+from app.router import home_viz_router1, home_viz_router2, home_viz_router3, home_viz_router4, employee, title_router, dept_router, dept_manager_router, dept_emp_router, employee_view_router, salary_router, executor
 
 
 # 配置日志
@@ -35,7 +35,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(home_viz_router.router)
+app.include_router(home_viz_router1.router)
+app.include_router(home_viz_router2.router)
+app.include_router(home_viz_router3.router)
+app.include_router(home_viz_router4.router)
 app.include_router(employee.router)
 app.include_router(title_router.router)
 app.include_router(dept_router.router)
