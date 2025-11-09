@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query, Body
 from pydantic import BaseModel
 # from sqlalchemy import text, create_engine
-from app.db.employee import db_get_emp_list, db_add_emp, db_del_emp, db_update_emp
+from app.db.employee import db_get_emp_list, db_add_emp, db_del_emp, db_update_emp, get_emp_info
 
 router = APIRouter()
 
@@ -19,6 +19,9 @@ class EmployeeUpdate(BaseModel):
     name: str | None = None
     first_name: str | None = None
     last_name: str | None = None
+    dept_no: str | None = None
+    title: str | None = None
+    salary: int | None = None
 
 
 class EmployeeCreate(BaseModel):
@@ -99,6 +102,9 @@ async def update_employee(
         birth_date=payload.birth_date,
         hire_date=payload.hire_date,
         name=resolved_name,
+        dept_no=payload.dept_no,
+        title=payload.title,
+        salary=payload.salary,
     )
 
 @router.delete('/employees/{emp_no}', tags=['employees'])
@@ -108,3 +114,11 @@ async def delete_employee(emp_no: int):
     - 路径参数：emp_no (员工编号)
     """
     return db_del_emp(emp_no=emp_no)
+
+@router.get('/employees/{emp_no}', tags=['employees'])
+async def get_employee_info(emp_no: int):
+    """
+    获取员工信息：根据员工编号查询员工的详细信息。
+    - 路径参数：emp_no (员工编号)
+    """
+    return get_emp_info(emp_no=emp_no)

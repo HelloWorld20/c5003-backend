@@ -43,9 +43,6 @@ def format_timestamp_to_date(timestamp_str):
         # 如果转换失败，返回原始字符串
         return timestamp_str
 
-
-
-
 def db_get_emp_list(page: int, pageSize: int, gender: str, emp_no: int, birth_date_start: str, birth_date_end: str,  hire_date_start: str, hire_date_end: str,  name: str):
     """
     Query an employee list with pagination and optional filtering conditions.
@@ -55,13 +52,12 @@ def db_get_emp_list(page: int, pageSize: int, gender: str, emp_no: int, birth_da
     pageSize = pageSize or 10
     with engine.connect() as conn:
         sql = """
-            SELECT * FROM employees AS e
-            JOIN dept_emp AS de ON e.emp_no = de.emp_no
-            JOIN departments AS d ON d.dept_no = de.dept_no
-            JOIN titles AS t ON t.emp_no = e.emp_no AND t.from_date = (SELECT MAX(from_date) FROM titles WHERE emp_no = e.emp_no)
-            JOIN salaries AS s ON s.emp_no = e.emp_no AND s.from_date = (SELECT MAX(from_date) FROM salaries WHERE emp_no = e.emp_no)
+            SELECT * FROM employees E
+            JOIN dept_emp DE ON E.emp_no = DE.emp_no
+            JOIN departments d ON d.dept_no = DE.dept_no
+            JOIN titles T ON T.emp_no = E.emp_no AND T.from_date = (SELECT MAX(from_date) FROM titles WHERE emp_no = E.emp_no)
+            JOIN salaries S ON S.emp_no = E.emp_no AND S.from_date = (SELECT MAX(from_date) FROM salaries WHERE emp_no = E.emp_no)
         """
-        # countSql = 'SELECT count(*) FROM employees'
         
         # 条件映射：字段名 -> SQL 条件模板
         condition_map = {
@@ -127,6 +123,28 @@ def db_get_emp_list(page: int, pageSize: int, gender: str, emp_no: int, birth_da
             # 非查询语句，返回受影响行数
             return {"rowcount": result.rowcount}
 
+# get employee info by emp_no
+def get_emp_info(emp_no: int):
+    with engine.connect() as conn:
+        sql = f"""
+            SELECT * FROM employees E
+            JOIN dept_emp DE ON E.emp_no = DE.emp_no
+            JOIN departments D ON DE.dept_no = D.dept_no
+            JOIN titles T ON E.emp_no = T.emp_no AND T.from_date = (SELECT MAX(from_date) FROM titles WHERE emp_no = E.emp_no)
+            JOIN salaries S ON E.emp_no = S.emp_no AND S.from_date = (SELECT MAX(from_date) FROM salaries WHERE emp_no = E.emp_no)
+            WHERE E.emp_no = {emp_no}
+        """
+
+        print('Execute SQL：')
+        print(sql)
+        result = conn.execute(text(sql))
+        if result.returns_rows:
+            # 将 Row 对象转成字典，便于 JSON 序列化
+            data = result.mappings().all()
+            return data
+        else:
+            # 非查询语句，返回受影响行数
+            return {"rowcount": result.rowcount}
 
 
 # add employee
@@ -162,65 +180,124 @@ def db_add_emp(gender: str, birth_date: str, hire_date: str, name: str):
 
 
 # update employee's info
-def db_update_emp(emp_no: str, gender: str, birth_date: str, hire_date: str, name: str):
-    with engine.connect() as conn:
-
-        parts = name.split(' ', 1)
+def db_update_emp(emp_no: str, gender: str, birth_date: str, hire_date: str, name: str, 
+                  dept_no: str = None, title: str = None, salary: int = None, 
+                  from_date: str = None, to_date: str = None):
+    """
+    更新员工信息，支持多表更新（employees, dept_emp, titles, salaries）
+    
+    参数:
+    - emp_no: 员工编号（必需）
+    - gender, birth_date, hire_date, name: 员工基本信息
+    - dept_no: 部门编号（更新部门关系）
+    - title: 职称（更新职称）
+    - salary: 薪资（更新薪资）
+    - from_date: 开始日期（用于部门关系、职称、薪资）
+    - to_date: 结束日期（用于部门关系、职称、薪资）
+    """
+    with engine.begin() as conn:  # 使用事务，自动提交或回滚
+        
+        # 1. 更新 employees 表
+        update_operations = []
+        
+        parts = name.split(' ', 1) if name else ('', '')
         first_name = parts[0]
         last_name = parts[1] if len(parts) > 1 else ''
 
         conditions = {}
 
         if gender:
-            conditions['gender']= gender
+            conditions['gender'] = gender
         if name:
-            first_name = parts[0]
-            last_name = parts[1] if len(parts) > 1 else ''
-            conditions['first_name']= first_name
-            conditions['last_name']= last_name
-
+            conditions['first_name'] = first_name
+            conditions['last_name'] = last_name
         if birth_date:
-            conditions['birth_date']= birth_date
-
+            conditions['birth_date'] = birth_date
         if hire_date:
-            conditions['hire_date']= hire_date
+            conditions['hire_date'] = hire_date
 
-        # 映射字段名到 SET 子句模板
-        set_map = {
-            'gender': "gender = '{value}'",
-            'birth_date': "birth_date = '{value}'",
-            'hire_date': "hire_date = '{value}'",
-            'first_name': "first_name = '{value}'",
-            'last_name': "last_name = '{value}'"
-        }
+        if conditions:
+            set_map = {
+                'gender': "gender = '{value}'",
+                'birth_date': "birth_date = '{value}'",
+                'hire_date': "hire_date = '{value}'",
+                'first_name': "first_name = '{value}'",
+                'last_name': "last_name = '{value}'"
+            }
 
-        # 生成 SET 子句列表并拼接
-        set_clauses = [
-            set_map[key].format(value=value)
-            for key, value in conditions.items()
-            if value and key in set_map
-        ]
-        set_sql = ', '.join(set_clauses)
-        
+            set_clauses = [
+                set_map[key].format(value=value)
+                for key, value in conditions.items()
+                if value and key in set_map
+            ]
+            
+            if set_clauses:
+                sql = f'UPDATE employees SET {", ".join(set_clauses)} WHERE emp_no = {emp_no}'
+                update_operations.append(sql)
 
-        sql = f'UPDATE employees SET {set_sql} WHERE emp_no={emp_no}'
+        # 2. 更新 dept_emp 表（部门关系）
+        print('dept_nodept_nodept_nodept_nodept_no update', dept_no)
 
+        if dept_no:
+            
+            # 先结束当前部门关系
+            end_current_dept_sql = f"""
+                UPDATE dept_emp 
+                SET to_date = '{from_date or '9999-01-01'}' 
+                WHERE emp_no = {emp_no} AND to_date = '9999-01-01'
+            """
+            update_operations.append(end_current_dept_sql)
+            
+            # 添加新的部门关系
+            new_dept_sql = f"""
+                INSERT INTO dept_emp (emp_no, dept_no, from_date, to_date)
+                VALUES ({emp_no}, '{dept_no}', '{from_date or '9999-01-01'}', '{to_date or '9999-01-01'}')
+            """
+            update_operations.append(new_dept_sql)
 
-        print('Execute SQL：')
-        print(sql)
-        result = conn.execute(text(sql))
+        # 3. 更新 titles 表（职称）
+        if title:
+            # 先结束当前职称
+            end_current_title_sql = f"""
+                UPDATE titles 
+                SET to_date = '{from_date or '9999-01-01'}' 
+                WHERE emp_no = {emp_no} AND to_date = '9999-01-01'
+            """
+            update_operations.append(end_current_title_sql)
+            
+            # 添加新的职称
+            new_title_sql = f"""
+                INSERT INTO titles (emp_no, title, from_date, to_date)
+                VALUES ({emp_no}, '{title}', '{from_date or '9999-01-01'}', '{to_date or '9999-01-01'}')
+            """
+            update_operations.append(new_title_sql)
 
+        # 4. 更新 salaries 表（薪资）
+        if salary is not None:
+            # 先结束当前薪资
+            end_current_salary_sql = f"""
+                UPDATE salaries 
+                SET to_date = '{from_date or '9999-01-01'}' 
+                WHERE emp_no = {emp_no} AND to_date = '9999-01-01'
+            """
+            update_operations.append(end_current_salary_sql)
+            
+            # 添加新的薪资
+            new_salary_sql = f"""
+                INSERT INTO salaries (emp_no, salary, from_date, to_date)
+                VALUES ({emp_no}, {salary}, '{from_date or '9999-01-01'}', '{to_date or '9999-01-01'}')
+            """
+            update_operations.append(new_salary_sql)
 
-        # 提交事务，确保操作生效
-        conn.commit()
-        # 判断是否有查询内容返回（SELECT / RETURNING）
-        if result.returns_rows:
-            # 将 Row 对象转成字典，便于 JSON 序列化
-            data = result.mappings().all()
-            return data
-        else:
-            # 非查询语句，返回受影响行数
-            return {"rowcount": result.rowcount}
+        # 执行所有更新操作
+        total_affected = 0
+        for sql in update_operations:
+            print('Execute SQL：')
+            print(sql)
+            result = conn.execute(text(sql))
+            total_affected += result.rowcount
+
+        return {"rowcount": total_affected, "operations": len(update_operations)}
             
 # delete one or more employee's record
 def db_del_emp(emp_no: int):

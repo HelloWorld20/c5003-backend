@@ -137,3 +137,17 @@ def db_del_dept(Dept_ID: str, Dept_Name: str):
             # 2. ROLLBACK on error (e.g., Foreign Key violation)
             conn.rollback()
             return {"rowcount": 0, "status": "error", "message": str(e)}
+
+
+def db_get_dept_info(Dept_ID: str):
+    """
+    Query a department info with department ID.
+    """
+    with engine.connect() as conn:
+        sql = """
+        SELECT * FROM departments WHERE dept_no = :dept_no
+        """
+        params = {"dept_no": Dept_ID}
+        result = conn.execute(text(sql), params)
+        data = result.mappings().all()
+        return data

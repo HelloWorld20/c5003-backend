@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query, Body
 from pydantic import BaseModel, Field, AliasChoices
 # from sqlalchemy import text, create_engine
-from app.db.dept_db import db_dept_list, db_add_dept, db_update_dept, db_del_dept
+from app.db.dept_db import db_dept_list, db_add_dept, db_update_dept, db_del_dept, db_get_dept_info
 
 router = APIRouter()
 
@@ -65,3 +65,10 @@ async def delete_dept(payload: DepartmentDelete = Body(..., description="部门�
     - 请求体：兼容 `dept_no/dept_name` 与 `Dept_ID/Dept_Name`
     """
     return db_del_dept(Dept_ID=payload.dept_no, Dept_Name=payload.dept_name)
+
+@router.get('/departments/detail', tags=['Departments'])
+async def get_dept_info(Dept_ID: str = Query(..., description="Mandatory")):
+    """
+    Obtain department information by department ID.
+    """
+    return db_get_dept_info(Dept_ID)
