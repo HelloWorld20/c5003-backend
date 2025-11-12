@@ -28,7 +28,6 @@ class DepartmentDelete(BaseModel):
     - 兼容 `dept_no`/`Dept_ID` 与 `dept_name`/`Dept_Name`
     """
     dept_no: str = Field(..., validation_alias=AliasChoices('dept_no', 'Dept_ID'))
-    dept_name: str = Field(..., validation_alias=AliasChoices('dept_name', 'Dept_Name'))
 
 @router.get('/dept/list', tags=['Departments'])
 async def get_dept_list(
@@ -64,7 +63,7 @@ async def delete_dept(payload: DepartmentDelete = Body(..., description="部门�
     删除部门记录。
     - 请求体：兼容 `dept_no/dept_name` 与 `Dept_ID/Dept_Name`
     """
-    return db_del_dept(Dept_ID=payload.dept_no, Dept_Name=payload.dept_name)
+    return db_del_dept(Dept_ID=payload.dept_no)
 
 @router.get('/departments/detail', tags=['Departments'])
 async def get_dept_info(Dept_ID: str = Query(..., description="Mandatory")):

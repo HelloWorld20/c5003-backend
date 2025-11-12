@@ -1,6 +1,7 @@
 from sqlalchemy import text
 from .init import engine
 from datetime import datetime
+from fastapi import HTTPException
 
 def db_dept_list(Page_Number: int, Row_Count: int, Dept_ID: str, Dept_Name: str):
     """
@@ -113,15 +114,25 @@ def db_update_dept(Dept_ID: str, Dept_Name: str):
             return {"rowcount": 0, "status": "error", "message": str(e)}
             
 # delete one dept's record
-def db_del_dept(Dept_ID: str, Dept_Name: str):
+def db_del_dept(Dept_ID: str):
     """
     Delete an department record from the 'departments' table.
     """
     with engine.connect() as conn:
         
-        sql = "DELETE FROM departments WHERE dept_no = :dept_no AND dept_name = :dept_name"
-        params = {"dept_no": Dept_ID,
-                  "dept_name": Dept_Name}
+        remainSql = 'SELECT COUNT(*) FROM dept_emp WHERE dept_no = :dept_no'
+        params = {"dept_no": Dept_ID}
+        remainResult = conn.execute(text(remainSql), params)
+        remainCount = remainResult.scalar()
+
+        if remainCount > 0:
+            # If there are employees, deny deletion with 403
+            raise HTTPException(status_code=403, detail="Department still has employees, cannot delete.")
+
+
+
+        sql = "DELETE FROM departments WHERE dept_no = :dept_no"
+        params = {"dept_no": Dept_ID}
 
         try:
             # 1. EXECUTE database logic
