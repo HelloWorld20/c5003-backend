@@ -34,19 +34,23 @@ class EmployeeCreate(BaseModel):
     birth_date: str
     hire_date: str
     gender: str
+    emp_no: int | None = None
     name: str | None = None
     first_name: str | None = None
     last_name: str | None = None
+    dept_no: str | None = None
+    salary: int | None = None
+    title: str | None = None
+
+
 
 @router.get('/employees/list', tags=['employees'])
 async def get_employees_list(
     page: int = Query(..., description="页码，必填"),
     pageSize: int = Query(..., description="每页条数，必填"),
     emp_no: int | None = Query(None, description="员工编号，非必填"),
-    birth_date_start: str | None = Query(None, description="出生开始日期，非必填"),
-    birth_date_end: str | None = Query(None, description="出生结束日期，非必填"),
-    hire_date_start: str | None = Query(None, description="入职开始日期，非必填"),
-    hire_date_end: str | None = Query(None, description="入职结束日期，非必填"),
+    birth_date: str | None = Query(None, description="出生日期，非必填"),
+    hire_date: str | None = Query(None, description="入职日期，非必填"),
     name: str | None = Query(None, description="姓名，非必填"),
     gender: str | None = Query(None, description="性别，非必填"),
 ):
@@ -72,10 +76,14 @@ async def add_employee(payload: EmployeeCreate = Body(..., description="员工�
         resolved_name = (first + (" " + last if last else "")) or ""
 
     return db_add_emp(
+        emp_no=payload.emp_no,
         gender=payload.gender,
         birth_date=payload.birth_date,
         hire_date=payload.hire_date,
         name=resolved_name,
+        dept_no=payload.dept_no,
+        salary=payload.salary,
+        title=payload.title,
     )
 
 @router.put('/employees/{emp_no}', tags=['employees'])

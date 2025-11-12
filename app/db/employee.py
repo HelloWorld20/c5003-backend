@@ -43,7 +43,8 @@ def format_timestamp_to_date(timestamp_str):
         # 如果转换失败，返回原始字符串
         return timestamp_str
 
-def db_get_emp_list(page: int, pageSize: int, gender: str, emp_no: int, birth_date_start: str, birth_date_end: str,  hire_date_start: str, hire_date_end: str,  name: str):
+def db_get_emp_list(page: int, pageSize: int, gender: str, emp_no: int, birth_date: str,  hire_date: str,  name: str, salary: int = None, dept_name: str = None, title: str = None):
+
     """
     Query an employee list with pagination and optional filtering conditions.
     And use a dictionary mapping to simplify the conditional concatenation logic.
@@ -52,73 +53,101 @@ def db_get_emp_list(page: int, pageSize: int, gender: str, emp_no: int, birth_da
     pageSize = pageSize or 10
     with engine.connect() as conn:
         sql = """
-            SELECT * FROM employees E
-            JOIN dept_emp DE ON E.emp_no = DE.emp_no
-            JOIN departments d ON d.dept_no = DE.dept_no
-            JOIN titles T ON T.emp_no = E.emp_no AND T.from_date = (SELECT MAX(from_date) FROM titles WHERE emp_no = E.emp_no)
-            JOIN salaries S ON S.emp_no = E.emp_no AND S.from_date = (SELECT MAX(from_date) FROM salaries WHERE emp_no = E.emp_no)
+            SELECT
+            e.emp_no,
+            e.first_name,
+            e.last_name,
+            e.gender,
+            e.birth_date,
+            e.hire_date,
+            ls.salary,
+            d.dept_name,
+            lt.title
+            FROM employees e
+
+            /* 优化最新部门查询 - 使用相关子查询 */
+            LEFT JOIN (
+                SELECT de1.emp_no, de1.dept_no
+                FROM dept_emp de1
+                WHERE de1.from_date = (
+                    SELECT MAX(from_date) 
+                    FROM dept_emp de2 
+                    WHERE de2.emp_no = de1.emp_no
+                )
+            ) ld ON ld.emp_no = e.emp_no
+            LEFT JOIN departments d ON d.dept_no = ld.dept_no
+
+            /* 优化最新薪资查询 - 使用相关子查询 */
+            LEFT JOIN (
+                SELECT s1.emp_no, s1.salary
+                FROM salaries s1
+                WHERE s1.from_date = (
+                    SELECT MAX(from_date) 
+                    FROM salaries s2 
+                    WHERE s2.emp_no = s1.emp_no
+                )
+            ) ls ON ls.emp_no = e.emp_no
+
+            /* 优化最新头衔查询 - 使用相关子查询 */
+            LEFT JOIN (
+                SELECT t1.emp_no, t1.title
+                FROM titles t1
+                WHERE t1.from_date = (
+                    SELECT MAX(from_date) 
+                    FROM titles t2 
+                    WHERE t2.emp_no = t1.emp_no
+                )
+            ) lt ON lt.emp_no = e.emp_no
+
+            WHERE
+            (:emp_no          IS NULL OR e.emp_no     = :emp_no)
+            AND (:last_name   IS NULL OR e.last_name  LIKE CONCAT('%', :last_name,  '%'))
+            AND (:first_name  IS NULL OR e.first_name LIKE CONCAT('%', :first_name, '%'))
+            AND (:gender      IS NULL OR e.gender     = :gender)
+            AND (:birth_date  IS NULL OR e.birth_date = :birth_date)  
+            AND (:hire_date   IS NULL OR e.hire_date  = :hire_date)
+            AND (:salary      IS NULL OR ls.salary    = :salary)
+            AND (:dept_name   IS NULL OR d.dept_name  LIKE CONCAT('%', :dept_name,  '%'))
+            AND (:title       IS NULL OR lt.title     LIKE CONCAT('%', :title,      '%'))
+
+            ORDER BY e.emp_no
+            LIMIT :pageSize OFFSET :offset;
         """
+
+        # 处理姓名模糊查询：将输入的name按空格分割为first_name和last_name
+        first_name_part = ""
+        last_name_part = ""
+        if name:
+            name_parts = name.split(' ', 1)  # 最多分割成两部分
+            first_name_part = name_parts[0] if len(name_parts) > 0 else ""
+            last_name_part = name_parts[1] if len(name_parts) > 1 else name_parts[0]
         
-        # 条件映射：字段名 -> SQL 条件模板
-        condition_map = {
-            'name': "CONCAT(first_name, ' ', last_name) LIKE '%{value}%'",
-            'gender': "gender = '{value}'",
-            'emp_no': "emp_no = {value}",
+        params = {
+            "emp_no": emp_no,
+            "last_name": last_name_part if last_name_part else None,
+            "first_name": first_name_part if first_name_part else None,
+            "gender": gender,
+            "birth_date": birth_date if birth_date else None,
+            "hire_date": hire_date if hire_date else None,
+            "salary": salary,
+            "dept_name": dept_name,
+            "title": title,
+            "pageSize": pageSize,
+            "offset": (page - 1) * pageSize,
         }
         
-        # 条件字典
-        conditions = {
-            'name': name,
-            'gender': gender,
-            'emp_no': emp_no,
-        }
+        # 执行主查询
+        result = conn.execute(text(sql), params)
         
-        # 生成 WHERE 子句：过滤非空值并格式化
-        where_clauses = [
-            condition_map[key].format(value=value)
-            for key, value in conditions.items()
-            if value and key in condition_map
-        ]
-        
-        # 处理日期范围条件
-        if birth_date_start and birth_date_end:
-            where_clauses.append(f"birth_date BETWEEN '{birth_date_start}' AND '{birth_date_end}'")
-        elif birth_date_start:
-            where_clauses.append(f"birth_date >= '{birth_date_start}'")
-        elif birth_date_end:
-            where_clauses.append(f"birth_date <= '{birth_date_end}'")
-            
-        if hire_date_start and hire_date_end:
-            where_clauses.append(f"hire_date BETWEEN '{hire_date_start}' AND '{hire_date_end}'")
-        elif hire_date_start:
-            where_clauses.append(f"hire_date >= '{hire_date_start}'")
-        elif hire_date_end:
-            where_clauses.append(f"hire_date <= '{hire_date_end}'")
-        
-        if where_clauses:
-            sql += ' WHERE ' + ' AND '.join(where_clauses)
-            # countSql += ' WHERE ' + ' AND '.join(where_clauses)
+        # 执行计数查询
+        # count_result = conn.execute(text(count_sql), params)
+        # total = count_result.scalar()  # 获取单个值
 
-        
-        sql += f' LIMIT {pageSize} OFFSET {(page - 1) * pageSize}'
-
-        print('Execute SQL：')
-        print(sql)
-        # print(countSql)
-        result = conn.execute(text(sql))
-       
-
-        # countResult = conn.execute(text(countSql))
-        # print(dir(result))
-        # print('我想看的值：')
-        # 读取 count(*) 的值：fetchone() 返回一个 Row，再取下标 0
-        # total = countResult.fetchone()[0]
-        # print("Record Count：", total)
         # 判断是否有查询内容返回（SELECT / RETURNING）
         if result.returns_rows:
             # 将 Row 对象转成字典，便于 JSON 序列化
             data = result.mappings().all()
-            return {'data': data, 'total': -1}
+            return {'data': data}
         else:
             # 非查询语句，返回受影响行数
             return {"rowcount": result.rowcount}
@@ -148,24 +177,44 @@ def get_emp_info(emp_no: int):
 
 
 # add employee
-def db_add_emp(gender: str, birth_date: str, hire_date: str, name: str):
+def db_add_emp(emp_no: int, gender: str, birth_date: str, hire_date: str, name: str, dept_no: str, salary: int, title: str):
     with engine.connect() as conn:
-        emp_no = int(random.random() * 1000000000)
+        # emp_no = int(random.random() * 1000000000)
 
         parts = name.split(' ', 1)
         first_name = parts[0]
         last_name = parts[1] if len(parts) > 1 else ''
 
-        hire_date = format_timestamp_to_date(hire_date)
-        birth_date = format_timestamp_to_date(birth_date)
+        # hire_date = format_timestamp_to_date(hire_date)
+        # birth_date = format_timestamp_to_date(birth_date)
 
         sql = f'INSERT INTO employees (emp_no, birth_date, first_name, last_name, gender, hire_date) VALUES ({emp_no}, \'{birth_date}\', \'{first_name}\', \'{last_name}\', \'{gender}\', \'{hire_date}\')'
         # INSERT INTO table_name (column1, column2, column3, ...)
         # VALUES (value1, value2, value3, ...)
 
-        print('Execute SQL：')
-        print(sql)
         result = conn.execute(text(sql))
+
+        # 使用当前日期作为from_date，to_date固定为9999-01-01
+        current_date = datetime.now().strftime('%Y-%m-%d')
+        to_date_fixed = '9999-01-01'
+        
+        # 更新部门关系表
+        dept_sql = f'INSERT INTO dept_emp (emp_no, dept_no, from_date, to_date) VALUES ({emp_no}, \'{dept_no}\', \'{current_date}\', \'{to_date_fixed}\')'
+        print('Execute SQL：')
+        print(dept_sql)
+        result = conn.execute(text(dept_sql))
+        
+        # 更新薪资表
+        salary_sql = f'INSERT INTO salaries (emp_no, salary, from_date, to_date) VALUES ({emp_no}, {salary}, \'{current_date}\', \'{to_date_fixed}\')'
+        print('Execute SQL：')
+        print(salary_sql)
+        result = conn.execute(text(salary_sql))
+        
+        # 更新职称表
+        title_sql = f'INSERT INTO titles (emp_no, title, from_date, to_date) VALUES ({emp_no}, \'{title}\', \'{current_date}\', \'{to_date_fixed}\')'
+        print('Execute SQL：')
+        print(title_sql)
+        result = conn.execute(text(title_sql))
         
         # 提交事务，确保操作生效
         conn.commit()
