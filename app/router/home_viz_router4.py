@@ -85,7 +85,7 @@ async def get_dashboard_stream():
     
     # --- End of your plotting logic ---
     img_buffer = io.BytesIO()
-    plt.savefig(img_buffer, format='png', dpi=150, bbox_inches='tight')
+    plt.savefig(img_buffer, format='png', bbox_inches='tight')
     img_buffer.seek(0)
     plt.close()
     
