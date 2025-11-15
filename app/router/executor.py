@@ -4,7 +4,7 @@ from app.db.executor import executor
 
 router = APIRouter()
 
-@router.get("/exec", tags=["exec"])
+@router.get("/exec", tags=["Exec"])
 async def get_dept_name(sql):
     try:
         return executor(sql)

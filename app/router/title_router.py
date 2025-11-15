@@ -8,11 +8,11 @@ router = APIRouter()
 
 class TitleUpdate(BaseModel):
     """
-    职称更新请求体模型
-    - 支持两种命名风格：
-      - 前端常用：`emp_no`, `title`, `from_date`, `to_date`
-      - 旧接口风格：`Employee_ID`, `Title`, `From_Date`, `To_Date`
-    - 通过 `validation_alias` 同时兼容两套字段名，避免 422 校验错误
+    Title update request body model
+    - Supports two naming styles:
+      - Frontend common: `emp_no`, `title`, `from_date`, `to_date`
+      - Legacy API style: `Employee_ID`, `Title`, `From_Date`, `To_Date`
+    - Compatible with both field naming styles via `validation_alias` to avoid 422 validation errors
     """
     emp_no: int = Field(
         ...,
@@ -45,9 +45,9 @@ class TitleUpdate(BaseModel):
 
 class TitleCreate(BaseModel):
     """
-    职称创建请求体模型
-    - 兼容两套命名：`emp_no/title/from_date/to_date` 与 `Employee_ID/Title/From_Date/To_Date`
-    - `to_date` 可选，缺省为 `'9999-01-01'`
+    Title creation request body model
+    - Compatible with two naming styles: `emp_no/title/from_date/to_date` and `Employee_ID/Title/From_Date/To_Date`
+    - `to_date` is optional, defaults to `'9999-01-01'`
     """
     emp_no: int = Field(..., validation_alias=AliasChoices('emp_no', 'Employee_ID'))
     title: str = Field(..., validation_alias=AliasChoices('title', 'Title'))
@@ -56,8 +56,8 @@ class TitleCreate(BaseModel):
 
 class TitleDelete(BaseModel):
     """
-    职称删除请求体模型
-    - 兼容两套字段命名：`emp_no/title` 与 `Employee_ID/Title`
+    Title deletion request body model
+    - Compatible with two field naming styles: `emp_no/title` and `Employee_ID/Title`
     """
     emp_no: int = Field(..., validation_alias=AliasChoices('emp_no', 'Employee_ID'))
     title: str = Field(..., validation_alias=AliasChoices('title', 'Title'))
@@ -77,26 +77,19 @@ async def get_titles_list(
     return db_title_list(**locals())
 
 @router.post('/titles/addition', tags=['Titles'])
-async def add_title(payload: TitleCreate = Body(..., description="职称创建信息，按 JSON 传入")):
+async def add_title(payload: TitleCreate = Body(..., description="Title creation information, pass as JSON")):
     """
-    新增员工职称记录。
-    - 请求体：兼容两套字段命名，避免 422
-    - 未提供 `to_date` 时默认 `'9999-01-01'`
+    Create a new employee title record.
     """
     effective_to_date = '9999-01-01' if payload.to_date is None else payload.to_date
     return db_add_title(Employee_ID=payload.emp_no, Title=payload.title, From_Date=payload.from_date, To_Date=effective_to_date)
 
 @router.put('/titles/update', tags=['Titles'])
-async def update_title(payload: dict = Body(..., description="职称更新信息，按 JSON 传入（可嵌套 payload）")):
+async def update_title(payload: dict = Body(..., description="Title update information, pass as JSON (can be nested in payload)")):
     """
-    更新员工职称的结束日期。
-    - 接受任意 JSON 结构，不使用 Pydantic 强校验，避免 422。
-    - 兼容字段命名与结构：
-      - 顶层：`emp_no/title/from_date/to_date` 或 `Employee_ID/Title/From_Date/To_Date`
-      - 包裹：`{"payload": { ...同上... }}`
-    - 根据 `emp_no + title + from_date` 定位记录，更新其 `to_date`。
+    Update employee title end date.
     """
-    # 允许 payload 外层包裹
+    # Allow payload to be wrapped
     data = payload.get('payload', payload) if isinstance(payload, dict) else {}
 
     def pick(keys: list[str]):
@@ -115,7 +108,7 @@ async def update_title(payload: dict = Body(..., description="职称更新信息
     ) if val is None]
 
     if missing:
-        # 返回 400 而非 422，提示缺失字段，避免 Pydantic 层拦截
+        # Return 400 instead of 422, indicate missing fields, avoid Pydantic layer interception
         raise HTTPException(status_code=400, detail={
             'message': 'Missing required fields',
             'missing': missing
@@ -129,9 +122,8 @@ async def update_title(payload: dict = Body(..., description="职称更新信息
     )
 
 @router.delete('/titles/deletion', tags=['Titles'])
-async def delete_title(payload: TitleDelete = Body(..., description="职称删除信息，按 JSON 传入")):
+async def delete_title(payload: TitleDelete = Body(..., description="Title deletion information, pass as JSON")):
     """
-    删除员工职称记录。
-    - 请求体：兼容 `emp_no/title` 与 `Employee_ID/Title`
+    Delete employee title record.
     """
     return db_del_title(Employee_ID=payload.emp_no, Title=payload.title)

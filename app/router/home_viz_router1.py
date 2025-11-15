@@ -34,7 +34,7 @@ async def get_dashboard_stream():
         # Return the error directly
         return {"error": f"Database connection error: {e}"}
 
-    fig, axes = plt.subplots(1, 1, figsize=(22, 18))
+    fig, axes = plt.subplots(1, 1, figsize=(12, 7))
 
     # --- Plot: Number of employees in each department ---
     query1 = """
@@ -74,9 +74,9 @@ async def get_dashboard_stream():
     
     # --- End of your plotting logic ---
     img_buffer = io.BytesIO()
-    plt.savefig(img_buffer, format='png', dpi=150, bbox_inches='tight')
+    plt.savefig(img_buffer, format='png', bbox_inches='tight')
     img_buffer.seek(0)
     plt.close()
     
-    # 方式2：返回图片流（可直接作为 <img src="接口地址"> 使用）
+    # Method 2: Return image stream (can be used directly as <img src="endpoint_url">)
     return StreamingResponse(img_buffer, media_type="image/png")

@@ -23,8 +23,9 @@ def db_dept_list(Page_Number: int, Row_Count: int, Dept_ID: str, Dept_Name: str)
         }
 
         # 条件映射：字段名 -> SQL 条件模板
+        # Use LIKE for Name fields (with wildcards) and = for ID fields (exact match)
         condition_map = {
-            'Dept_Name': "dept_name = :Dept_Name",
+            'Dept_Name': "dept_name LIKE :Dept_Name",
             'Dept_ID': "dept_no = :Dept_ID",
         }
         

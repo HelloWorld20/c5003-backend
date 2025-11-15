@@ -7,11 +7,11 @@ router = APIRouter()
 
 class SalaryCreate(BaseModel):
     """
-    薪资创建请求体模型
-    - 兼容两套字段命名：
-      - 前端常用：`emp_no`, `salary`, `from_date`, `to_date`
-      - 旧接口风格：`Employee_ID`, `Salary`, `From_Date`, `To_Date`
-    - `to_date` 可选，缺省时路由层统一为 `'9999-01-01'`
+    Salary creation request body model
+    - Compatible with two field naming styles:
+      - Frontend common: `emp_no`, `salary`, `from_date`, `to_date`
+      - Legacy API style: `Employee_ID`, `Salary`, `From_Date`, `To_Date`
+    - `to_date` is optional, defaults to `'9999-01-01'` at router layer
     """
     emp_no: int = Field(..., validation_alias=AliasChoices('emp_no', 'Employee_ID'))
     salary: int = Field(..., validation_alias=AliasChoices('salary', 'Salary'))
@@ -20,9 +20,9 @@ class SalaryCreate(BaseModel):
 
 class SalaryUpdate(BaseModel):
     """
-    薪资更新请求体模型
-    - 用于更新某条薪资记录的结束日期
-    - 所有字段必填以唯一定位记录
+    Salary update request body model
+    - Used to update the end date of a salary record
+    - All fields are required to uniquely identify the record
     """
     emp_no: int = Field(..., validation_alias=AliasChoices('emp_no', 'Employee_ID'))
     salary: int = Field(..., validation_alias=AliasChoices('salary', 'Salary'))
@@ -31,8 +31,8 @@ class SalaryUpdate(BaseModel):
 
 class SalaryDelete(BaseModel):
     """
-    薪资删除请求体模型
-    - 兼容两套字段命名：`emp_no/salary` 与 `Employee_ID/Salary`
+    Salary deletion request body model
+    - Compatible with two field naming styles: `emp_no/salary` and `Employee_ID/Salary`
     """
     emp_no: int = Field(..., validation_alias=AliasChoices('emp_no', 'Employee_ID'))
     salary: int = Field(..., validation_alias=AliasChoices('salary', 'Salary'))
@@ -52,27 +52,23 @@ async def get_salary_list(
     return db_salary_list(**locals())
 
 @router.post('/salary/addition', tags=['Salaries'])
-async def add_salary(payload: SalaryCreate = Body(..., description="薪资创建信息，按 JSON 传入")):
+async def add_salary(payload: SalaryCreate = Body(..., description="Salary creation information, pass as JSON")):
     """
-    新增薪资记录。
-    - 请求体：兼容 `emp_no/salary/from_date/to_date` 与 `Employee_ID/Salary/From_Date/To_Date`
-    - 若 `to_date` 未提供，默认使用 `'9999-01-01'`
+    Create a new salary record.
     """
     effective_to_date = '9999-01-01' if payload.to_date is None else payload.to_date
     return db_add_salary(Employee_ID=payload.emp_no, Salary=payload.salary, From_Date=payload.from_date, To_Date=effective_to_date)
 
 @router.put('/salary/update', tags=['Salaries'])
-async def update_dept_emp(payload: SalaryUpdate = Body(..., description="薪资更新信息，按 JSON 传入")):
+async def update_dept_emp(payload: SalaryUpdate = Body(..., description="Salary update information, pass as JSON")):
     """
-    更新员工薪资记录的结束日期。
-    - 请求体：兼容两套字段命名，避免 422
+    Update employee salary record end date.
     """
     return db_update_salary(Employee_ID=payload.emp_no, Salary=payload.salary, From_Date=payload.from_date, To_Date=payload.to_date)
 
 @router.delete('/salary/deletion', tags=['Salaries'])
-async def delete_salary(payload: SalaryDelete = Body(..., description="薪资删除信息，按 JSON 传入")):
+async def delete_salary(payload: SalaryDelete = Body(..., description="Salary deletion information, pass as JSON")):
     """
-    删除员工薪资记录。
-    - 请求体：兼容 `emp_no/salary` 与 `Employee_ID/Salary`
+    Delete employee salary record.
     """
     return db_del_salary(Employee_ID=payload.emp_no, Salary=payload.salary)

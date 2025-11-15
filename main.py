@@ -7,7 +7,7 @@ import logging
 # from database import get_db, create_tables, engine
 
 
-from app.router import home_viz_router1, home_viz_router2, home_viz_router3, home_viz_router4, employee, title_router, dept_router, dept_manager_router, dept_emp_router, employee_view_router, salary_router, executor, example, headcount_trends, long_single_role, org_chart, promotion, retirement, transfer
+from app.router import home_viz_router1, home_viz_router2, home_viz_router3, home_viz_router4, employee, title_router, dept_router, dept_manager_router, dept_emp_router, employee_view_router, salary_router, executor
 
 
 # 配置日志
@@ -39,21 +39,16 @@ app.include_router(home_viz_router1.router)
 app.include_router(home_viz_router2.router)
 app.include_router(home_viz_router3.router)
 app.include_router(home_viz_router4.router)
+# Register employee_view_router BEFORE employee.router to avoid route conflict
+# /employees/view must be matched before /employees/{emp_no}
+app.include_router(employee_view_router.router)
 app.include_router(employee.router)
 app.include_router(title_router.router)
 app.include_router(dept_router.router)
 app.include_router(dept_manager_router.router)
 app.include_router(dept_emp_router.router)
 app.include_router(salary_router.router)
-app.include_router(employee_view_router.router)
 app.include_router(executor.router)
-app.include_router(example.router)
-app.include_router(headcount_trends.router)
-app.include_router(long_single_role.router)
-app.include_router(org_chart.router)
-app.include_router(promotion.router)
-app.include_router(retirement.router)
-app.include_router(transfer.router)
 
 # 应用启动事件
 @app.on_event("startup")

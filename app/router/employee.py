@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Query, Body
 from pydantic import BaseModel
+from typing import Optional
 # from sqlalchemy import text, create_engine
 from app.db.employee import db_get_emp_list, db_add_emp, db_del_emp, db_update_emp, get_emp_info
 
@@ -8,67 +9,70 @@ router = APIRouter()
 
 class EmployeeUpdate(BaseModel):
     """
-    员工更新请求体模型
-    - 可选字段：`birth_date`, `hire_date`, `gender`, `name`, `first_name`, `last_name`, `emp_no`
-    - 支持同时传入 `name` 或者 `first_name` + `last_name`，路由层会进行合并
+    Employee update request body model
+    - Optional fields: `birth_date`, `hire_date`, `gender`, `name`, `first_name`, `last_name`, `emp_no`
+    - Supports passing either `name` or `first_name` + `last_name`, router layer will merge them
     """
-    emp_no: int | None = None
-    birth_date: str | None = None
-    hire_date: str | None = None
-    gender: str | None = None
-    name: str | None = None
-    first_name: str | None = None
-    last_name: str | None = None
-    dept_no: str | None = None
-    title: str | None = None
-    salary: int | None = None
+    emp_no: Optional[int] = None
+    birth_date: Optional[str] = None
+    hire_date: Optional[str] = None
+    gender: Optional[str] = None
+    name: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    dept_no: Optional[str] = None
+    title: Optional[str] = None
+    salary: Optional[int] = None
 
 
 class EmployeeCreate(BaseModel):
     """
-    员工创建请求体模型
-    - 必填字段：`birth_date`, `hire_date`, `gender`
-    - 可选字段：`name` 或者 `first_name` + `last_name`
-    - 若同时提供 `name` 与 `first_name/last_name`，优先使用 `name`
+    Employee creation request body model
+    - Required fields: `birth_date`, `hire_date`, `gender`
+    - Optional fields: `name` or `first_name` + `last_name`
+    - If both `name` and `first_name/last_name` are provided, `name` takes priority
     """
     birth_date: str
     hire_date: str
     gender: str
-    emp_no: int | None = None
-    name: str | None = None
-    first_name: str | None = None
-    last_name: str | None = None
-    dept_no: str | None = None
-    salary: int | None = None
-    title: str | None = None
+    emp_no: Optional[int] = None
+    name: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    dept_no: Optional[str] = None
+    salary: Optional[int] = None
+    title: Optional[str] = None
 
 
 
-@router.get('/employees/list', tags=['employees'])
+@router.get('/employees/list', tags=['Employees'])
 async def get_employees_list(
-    page: int = Query(..., description="页码，必填"),
-    pageSize: int = Query(..., description="每页条数，必填"),
-    emp_no: int | None = Query(None, description="员工编号，非必填"),
-    birth_date: str | None = Query(None, description="出生日期，非必填"),
-    hire_date: str | None = Query(None, description="入职日期，非必填"),
-    name: str | None = Query(None, description="姓名，非必填"),
-    gender: str | None = Query(None, description="性别，非必填"),
+    page: int = Query(..., description="Mandatory"),
+    pageSize: int = Query(..., description="Mandatory"),
+    emp_no_min: Optional[int] = Query(None, description="Optional"),
+    emp_no_max: Optional[int] = Query(None, description="Optional"),
+    birth_date_min: Optional[str] = Query(None, description="Optional"),
+    birth_date_max: Optional[str] = Query(None, description="Optional"),
+    hire_date_min: Optional[str] = Query(None, description="Optional"),
+    hire_date_max: Optional[str] = Query(None, description="Optional"),
+    name: Optional[str] = Query(None, description="Optional"),
+    gender: Optional[str] = Query(None, description="Optional"),
+    salary_min: Optional[int] = Query(None, description="Optional"),
+    salary_max: Optional[int] = Query(None, description="Optional"),
+    dept_name: Optional[str] = Query(None, description="Optional"),
+    title: Optional[str] = Query(None, description="Optional"),
 ):
     """
-    获取员工列表：将入参原样透传给数据库查询函数。
-    - 必填：pageNo, pageSize
-    - 非必填：emp_no, birth_date, hire_date, name, gender
+    Obtain employee information and feed to the frontend.
     """
     return db_get_emp_list(**locals())
 
-@router.post('/employees', tags=['employees'])
-async def add_employee(payload: EmployeeCreate = Body(..., description="员工创建信息，请按 JSON 传入")):
+@router.post('/employees', tags=['Employees'])
+async def add_employee(payload: EmployeeCreate = Body(..., description="Employee creation information, pass as JSON")):
     """
-    添加员工：创建新的员工记录。
-    - 请求体：`birth_date`, `hire_date`, `gender` 必填；`name` 或 `first_name` + `last_name` 可选
-    - 说明：若同时提供 `name` 与 `first_name/last_name`，优先使用 `name`
+    Create a new employee record.
     """
-    # 规范化姓名：优先使用 name；否则拼接 first_name + last_name
+    # Normalize name: prioritize name; otherwise concatenate first_name + last_name
     resolved_name = payload.name
     if not resolved_name and (payload.first_name or payload.last_name):
         first = payload.first_name or ""
@@ -86,18 +90,15 @@ async def add_employee(payload: EmployeeCreate = Body(..., description="员工�
         title=payload.title,
     )
 
-@router.put('/employees/{emp_no}', tags=['employees'])
+@router.put('/employees/{emp_no}', tags=['Employees'])
 async def update_employee(
     emp_no: int,
-    payload: EmployeeUpdate = Body(..., description="员工更新信息，请按 JSON 传入")
+    payload: EmployeeUpdate = Body(..., description="Employee update information, pass as JSON")
 ):
     """
-    更新员工信息：根据员工编号更新员工的基础资料。
-    - 路径参数：`emp_no`（员工编号）
-    - 请求体：可选字段 `birth_date`, `hire_date`, `gender`, `name` 或 `first_name` + `last_name`
-    - 说明：若同时提供 `name` 与 `first_name/last_name`，优先使用 `name`
+    Update employee information by employee number.
     """
-    # 将 name 规范化为“名 + 空格 + 姓”的形式；若未提供则保持为 None
+    # Normalize name to "first + space + last" format; keep as None if not provided
     resolved_name = payload.name
     if not resolved_name and (payload.first_name or payload.last_name):
         first = payload.first_name or ""
@@ -115,18 +116,16 @@ async def update_employee(
         salary=payload.salary,
     )
 
-@router.delete('/employees/{emp_no}', tags=['employees'])
+@router.delete('/employees/{emp_no}', tags=['Employees'])
 async def delete_employee(emp_no: int):
     """
-    删除员工：根据员工编号删除员工记录。
-    - 路径参数：emp_no (员工编号)
+    Delete employee record by employee number.
     """
     return db_del_emp(emp_no=emp_no)
 
-@router.get('/employees/{emp_no}', tags=['employees'])
+@router.get('/employees/{emp_no}', tags=['Employees'])
 async def get_employee_info(emp_no: int):
     """
-    获取员工信息：根据员工编号查询员工的详细信息。
-    - 路径参数：emp_no (员工编号)
+    Obtain employee information by employee number.
     """
     return get_emp_info(emp_no=emp_no)

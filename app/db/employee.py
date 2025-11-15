@@ -43,7 +43,10 @@ def format_timestamp_to_date(timestamp_str):
         # 如果转换失败，返回原始字符串
         return timestamp_str
 
-def db_get_emp_list(page: int, pageSize: int, gender: str, emp_no: int, birth_date: str,  hire_date: str,  name: str, salary: int = None, dept_name: str = None, title: str = None):
+def db_get_emp_list(page: int, pageSize: int, gender: str = None, emp_no_min: int = None, emp_no_max: int = None, 
+                    birth_date_min: str = None, birth_date_max: str = None, hire_date_min: str = None, 
+                    hire_date_max: str = None, name: str = None, salary_min: int = None, salary_max: int = None, 
+                    dept_name: str = None, title: str = None):
 
     """
     Query an employee list with pagination and optional filtering conditions.
@@ -100,15 +103,33 @@ def db_get_emp_list(page: int, pageSize: int, gender: str, emp_no: int, birth_da
             ) lt ON lt.emp_no = e.emp_no
 
             WHERE
-            (:emp_no          IS NULL OR e.emp_no     = :emp_no)
+            /* Range search for Employee ID */
+            (:emp_no_min      IS NULL OR e.emp_no     >= :emp_no_min)
+            AND (:emp_no_max  IS NULL OR e.emp_no     <= :emp_no_max)
+            /* Name search (first_name and last_name) */
             AND (:last_name   IS NULL OR e.last_name  LIKE CONCAT('%', :last_name,  '%'))
             AND (:first_name  IS NULL OR e.first_name LIKE CONCAT('%', :first_name, '%'))
+            /* Gender exact match */
             AND (:gender      IS NULL OR e.gender     = :gender)
-            AND (:birth_date  IS NULL OR e.birth_date = :birth_date)  
-            AND (:hire_date   IS NULL OR e.hire_date  = :hire_date)
-            AND (:salary      IS NULL OR ls.salary    = :salary)
+            /* Range search for Birth Date */
+            AND (:birth_date_min IS NULL OR e.birth_date >= :birth_date_min)
+            AND (:birth_date_max IS NULL OR e.birth_date <= :birth_date_max)
+            /* Range search for Hire Date */
+            AND (:hire_date_min  IS NULL OR e.hire_date  >= :hire_date_min)
+            AND (:hire_date_max  IS NULL OR e.hire_date  <= :hire_date_max)
+            /* Range search for Salary */
+            AND (:salary_min     IS NULL OR ls.salary    >= :salary_min)
+            AND (:salary_max     IS NULL OR ls.salary    <= :salary_max)
+            /* Department name fuzzy search */
             AND (:dept_name   IS NULL OR d.dept_name  LIKE CONCAT('%', :dept_name,  '%'))
+            /* Title fuzzy search */
             AND (:title       IS NULL OR lt.title     LIKE CONCAT('%', :title,      '%'))
+            /* Business logic: Only show current employees - filter out employees where max end_date != '9999-01-01' */
+            AND (
+                SELECT MAX(de_check.to_date)
+                FROM dept_emp de_check
+                WHERE de_check.emp_no = e.emp_no
+            ) = '9999-01-01'
 
             ORDER BY e.emp_no
             LIMIT :pageSize OFFSET :offset;
@@ -123,13 +144,17 @@ def db_get_emp_list(page: int, pageSize: int, gender: str, emp_no: int, birth_da
             last_name_part = name_parts[1] if len(name_parts) > 1 else name_parts[0]
         
         params = {
-            "emp_no": emp_no,
+            "emp_no_min": emp_no_min,
+            "emp_no_max": emp_no_max,
             "last_name": last_name_part if last_name_part else None,
             "first_name": first_name_part if first_name_part else None,
             "gender": gender,
-            "birth_date": birth_date if birth_date else None,
-            "hire_date": hire_date if hire_date else None,
-            "salary": salary,
+            "birth_date_min": birth_date_min if birth_date_min else None,
+            "birth_date_max": birth_date_max if birth_date_max else None,
+            "hire_date_min": hire_date_min if hire_date_min else None,
+            "hire_date_max": hire_date_max if hire_date_max else None,
+            "salary_min": salary_min,
+            "salary_max": salary_max,
             "dept_name": dept_name,
             "title": title,
             "pageSize": pageSize,

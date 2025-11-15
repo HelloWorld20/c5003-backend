@@ -1,9 +1,14 @@
 # In app/db/employee_view_db.py
 
 from sqlalchemy import text
+from typing import Optional
 from .init import engine
 
-def employee_profile(Page_Number: int, Row_Count: int, Employee_ID: int, Employee_Name: str, Title: str, Salary: int, Department_Number: str, Department: str, Manager_Name: str, Effective_Date: str, End_Date: str):
+def employee_profile(Page_Number: int, Row_Count: int, Employee_ID_min: Optional[int] = None, Employee_ID_max: Optional[int] = None, 
+                    Employee_Name: Optional[str] = None, Title: Optional[str] = None, Salary_min: Optional[int] = None, 
+                    Salary_max: Optional[int] = None, Department_Number: Optional[str] = None, Department: Optional[str] = None, 
+                    Manager_Name: Optional[str] = None, Effective_Date_min: Optional[str] = None, Effective_Date_max: Optional[str] = None, 
+                    End_Date_min: Optional[str] = None, End_Date_max: Optional[str] = None):
     pageNo = Page_Number or 1
     pageSize = Row_Count or 10
 
@@ -42,31 +47,62 @@ def employee_profile(Page_Number: int, Row_Count: int, Employee_ID: int, Employe
         params = {}
         where_clauses = []
         
-        conditions = {
-            'Employee_ID': Employee_ID, 'Employee_Name': Employee_Name, 'Title': Title, 'Salary': Salary,
-            'Department_Number': Department_Number, 'Department': Department, 'Manager_Name': Manager_Name,
-            'Effective_Date': Effective_Date, 'End_Date': End_Date
-        }
-
-        condition_map = {
-            'Employee_ID': "emp_no = :Employee_ID",
-            'Employee_Name': "CONCAT(employee_first_name, ' ', employee_last_name) LIKE :Employee_Name",
-            'Title': "title = :Title",
-            'Salary': "salary = :Salary",
-            'Department_Number': "dept_no = :Department_Number",
-            'Department': "dept_name = :Department",
-            'Manager_Name': "CONCAT(manager_first_name, ' ', manager_last_name) LIKE :Manager_Name",
-            'Effective_Date': "effective_date = :Effective_Date",
-            'End_Date': "end_date = :End_Date"
-        }
-
-        for key, value in conditions.items():
-            if value is not None:
-                where_clauses.append(condition_map[key])
-                if 'Name' in key:
-                    params[key] = f"%{value}%"
-                else:
-                    params[key] = value
+        # Range searches for Employee_ID
+        if Employee_ID_min is not None:
+            where_clauses.append("emp_no >= :Employee_ID_min")
+            params['Employee_ID_min'] = Employee_ID_min
+        if Employee_ID_max is not None:
+            where_clauses.append("emp_no <= :Employee_ID_max")
+            params['Employee_ID_max'] = Employee_ID_max
+        
+        # Fuzzy search for Employee_Name
+        if Employee_Name is not None:
+            where_clauses.append("CONCAT(employee_first_name, ' ', employee_last_name) LIKE :Employee_Name")
+            params['Employee_Name'] = f"%{Employee_Name}%"
+        
+        # Fuzzy search for Title
+        if Title is not None:
+            where_clauses.append("title LIKE :Title")
+            params['Title'] = f"%{Title}%"
+        
+        # Range searches for Salary
+        if Salary_min is not None:
+            where_clauses.append("salary >= :Salary_min")
+            params['Salary_min'] = Salary_min
+        if Salary_max is not None:
+            where_clauses.append("salary <= :Salary_max")
+            params['Salary_max'] = Salary_max
+        
+        # Exact match for Department_Number
+        if Department_Number is not None:
+            where_clauses.append("dept_no = :Department_Number")
+            params['Department_Number'] = Department_Number
+        
+        # Fuzzy search for Department
+        if Department is not None:
+            where_clauses.append("dept_name LIKE :Department")
+            params['Department'] = f"%{Department}%"
+        
+        # Fuzzy search for Manager_Name
+        if Manager_Name is not None:
+            where_clauses.append("CONCAT(manager_first_name, ' ', manager_last_name) LIKE :Manager_Name")
+            params['Manager_Name'] = f"%{Manager_Name}%"
+        
+        # Range searches for Effective_Date
+        if Effective_Date_min is not None:
+            where_clauses.append("effective_date >= :Effective_Date_min")
+            params['Effective_Date_min'] = Effective_Date_min
+        if Effective_Date_max is not None:
+            where_clauses.append("effective_date <= :Effective_Date_max")
+            params['Effective_Date_max'] = Effective_Date_max
+        
+        # Range searches for End_Date
+        if End_Date_min is not None:
+            where_clauses.append("end_date >= :End_Date_min")
+            params['End_Date_min'] = End_Date_min
+        if End_Date_max is not None:
+            where_clauses.append("end_date <= :End_Date_max")
+            params['End_Date_max'] = End_Date_max
         
         if where_clauses:
             sql += ' WHERE ' + ' AND '.join(where_clauses)

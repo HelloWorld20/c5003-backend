@@ -7,25 +7,25 @@ router = APIRouter()
 
 class DepartmentCreate(BaseModel):
     """
-    部门创建请求体模型
-    - 支持字段别名兼容：`dept_no`/`Dept_ID` 与 `dept_name`/`Dept_Name`
-    - 目的：防止前端以不同命名风格传参导致 422 校验错误
+    Department creation request body model
+    - Supports field alias compatibility: `dept_no`/`Dept_ID` and `dept_name`/`Dept_Name`
+    - Purpose: Prevents 422 validation errors when frontend uses different naming styles
     """
     dept_no: str = Field(..., validation_alias=AliasChoices('dept_no', 'Dept_ID'))
     dept_name: str = Field(..., validation_alias=AliasChoices('dept_name', 'Dept_Name'))
 
 class DepartmentUpdate(BaseModel):
     """
-    部门更新请求体模型
-    - 与创建模型一致的字段与别名规则
+    Department update request body model
+    - Same fields and alias rules as creation model
     """
     dept_no: str = Field(..., validation_alias=AliasChoices('dept_no', 'Dept_ID'))
     dept_name: str = Field(..., validation_alias=AliasChoices('dept_name', 'Dept_Name'))
 
 class DepartmentDelete(BaseModel):
     """
-    部门删除请求体模型
-    - 兼容 `dept_no`/`Dept_ID` 与 `dept_name`/`Dept_Name`
+    Department deletion request body model
+    - Compatible with `dept_no`/`Dept_ID` and `dept_name`/`Dept_Name`
     """
     dept_no: str = Field(..., validation_alias=AliasChoices('dept_no', 'Dept_ID'))
 
@@ -42,26 +42,23 @@ async def get_dept_list(
     return db_dept_list(**locals())
 
 @router.post('/departments/addition', tags=['Departments'])
-async def add_dept(payload: DepartmentCreate = Body(..., description="部门创建信息，按 JSON 传入")):
+async def add_dept(payload: DepartmentCreate = Body(..., description="Department creation information, pass as JSON")):
     """
-    创建部门。
-    - 请求体：兼容 `dept_no/dept_name` 与 `Dept_ID/Dept_Name`
+    Create a new department.
     """
     return db_add_dept(Dept_ID=payload.dept_no, Dept_Name=payload.dept_name)
 
 @router.put('/departments/update', tags=['Departments'])
-async def update_dept(payload: DepartmentUpdate = Body(..., description="部门更新信息，按 JSON 传入")):
+async def update_dept(payload: DepartmentUpdate = Body(..., description="Department update information, pass as JSON")):
     """
-    更新部门信息。
-    - 请求体：兼容 `dept_no/dept_name` 与 `Dept_ID/Dept_Name`
+    Update department information.
     """
     return db_update_dept(Dept_ID=payload.dept_no, Dept_Name=payload.dept_name)
 
 @router.delete('/departments/deletion', tags=['Departments'])
-async def delete_dept(payload: DepartmentDelete = Body(..., description="部门删除信息，按 JSON 传入")):
+async def delete_dept(payload: DepartmentDelete = Body(..., description="Department deletion information, pass as JSON")):
     """
-    删除部门记录。
-    - 请求体：兼容 `dept_no/dept_name` 与 `Dept_ID/Dept_Name`
+    Delete department record.
     """
     return db_del_dept(Dept_ID=payload.dept_no)
 
