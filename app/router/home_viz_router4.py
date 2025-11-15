@@ -89,5 +89,5 @@ async def get_dashboard_stream():
     img_buffer.seek(0)
     plt.close()
     
-    # Method 2: Return image stream (can be used directly as <img src="endpoint_url">)
+    # 方式2：返回图片流（可直接作为 <img src="接口地址"> 使用）
     return StreamingResponse(img_buffer, media_type="image/png")
