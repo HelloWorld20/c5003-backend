@@ -22,8 +22,8 @@ pip install -r requirements.txt
 Assuming MySQL CLI is installed locally
 
 ```bash
-cd test_db  # go to the test_db directory
-mysql -h 127.0.0.1 -P 3306 -u root < employees.sql  # import base data
+cd data  # go to the data directory
+python data_injection.py  # import base data
 ```
 
 In `app/db/init.py`, modify the database connection string. Usually, only the password needs to be changed.
