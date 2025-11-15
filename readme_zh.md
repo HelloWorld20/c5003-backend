@@ -23,8 +23,8 @@ pip install -r requirements.txt
 假设本地已经安装好mysql工具
 
 ```bash
-cd test_db  # 切换到test_db目录下
-mysql -h 127.0.0.1 -P 3306 -u root < employees.sql  # 把基础数据导入数据库。
+cd data  # 切换到data目录下
+python data_injection.py  # 把基础数据导入数据库。
 ```
 
 在`app/db/init.py`文件里修改数据库的信息，一般情况下，只修改密码就行
